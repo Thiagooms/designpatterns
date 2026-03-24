@@ -13,7 +13,7 @@ sem quebrar o que já existe.
 | `Pedido.java` | Representa um pedido com produto, quantidade e preço |
 | `ResultadoPagamento.java` | Representa o resultado de uma tentativa de pagamento |
 | `ProcessadorPagamento.java` | Processa o pagamento de um pedido |
-| `Main.java` | Demonstra o uso do sistema |
+| `Maain.java` | Demonstra o uso do sistema |
 
 ## Atividade
 
@@ -27,7 +27,7 @@ Leia o método `pagar()` em `ProcessadorPagamento.java` e responda:
 
 ### Nível 2 — Nomeie o padrão
 
-Com base no mapeamento de code smells:
+Com base no mapeamento de case1 smells:
 
 - Qual é o nome do smell presente em `ProcessadorPagamento.java`?
 - Qual design pattern resolve esse problema?
@@ -39,7 +39,7 @@ Aplique o padrão identificado. Sua solução deve atender aos seguintes critér
 
 - [ ] `ProcessadorPagamento` não deve mais conter `if/else` para decidir como pagar
 - [ ] Adicionar um novo método de pagamento (ex: `cartao_debito`) não deve exigir alterar `ProcessadorPagamento`
-- [ ] O resultado de `Main.java` deve ser idêntico ao original após a refatoração
+- [ ] O resultado de `Maain.java` deve ser idêntico ao original após a refatoração
 - [ ] Cada forma de pagamento deve estar encapsulada em sua própria classe
 
 ## Dica

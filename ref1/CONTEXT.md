@@ -71,7 +71,7 @@ Cada exercício de refatoração segue esta estrutura:
 Cada exercício fica em sua própria pasta `exercicio-NN/` e contém:
 
 - **2 a 3 classes `.java`** com implementação concreta (cálculos, validações, geração de dados — não apenas `System.out.println`)
-- **`Main.java`** demonstrando o uso do código problemático
+- **`Maain.java`** demonstrando o uso do código problemático
 - **`README.md`** descrevendo o contexto, as classes, e as perguntas dos 3 níveis
 
 ---

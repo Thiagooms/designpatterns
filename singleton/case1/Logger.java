@@ -6,7 +6,9 @@ public class Logger {
     public static Logger getInstance(){
         if(instance == null) {
             synchronized (Logger.class){
-                instance = new Logger();
+                if (instance == null) {
+                    instance = new Logger();
+                }
             }
         }
 
