@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Factory Method: Case 3</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #a78bfa; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed22;
+      border: 1px solid #7c3aed;
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #1e1b2e;
+      border-left: 4px solid #7c3aed;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 3</h1>
+  <div class="badge">Smell Code para refatorar</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Uma plataforma de e-commerce cresceu rápido e o desenvolvedor original foi adicionando
+      canais de notificação diretamente no serviço principal conforme a necessidade surgia.
+    </p>
+    <p>
+      O código funciona, mas virou um problema: toda vez que um novo canal precisa ser adicionado
+      ou alterado, é necessário mexer na classe <code>ServicoNotificacao</code> — e o risco de
+      quebrar algo já existente é alto.
+    </p>
+    <p>
+      Seu trabalho é identificar o problema e refatorar o código aplicando o padrão correto.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Switch Statements + Inappropriate Intimacy</p>
+    <p>
+      O <strong>Switch Statements</strong> (ou cadeias de <code>if/else if</code>) é um smell code clássico descrito por
+      Martin Fowler no livro <em>Refactoring</em>. Ele aparece quando uma classe precisa
+      decidir <em>qual objeto criar ou qual comportamento executar</em> com base em um tipo ou string —
+      e essa decisão cresce a cada novo caso adicionado.
+    </p>
+    <p>
+      Combinado com o <strong>Inappropriate Intimacy</strong>: <code>ServicoNotificacao</code> conhece detalhes internos
+      de todas as implementações concretas (<code>NotificacaoEmail</code>, <code>NotificacaoSMS</code>, <code>NotificacaoPush</code>),
+      criando um acoplamento que não deveria existir nessa camada.
+    </p>
+    <p>
+      O sintoma mais direto é o <code>new</code> dentro do <code>if</code>: sempre que a criação de um objeto
+      está escondida dentro de uma condicional, é sinal de que a responsabilidade de criação
+      está no lugar errado.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+  <pre><span class="kw">public class</span> <span class="ty">ServicoNotificacao</span> {
+
+    <span class="kw">public void</span> <span class="mt">notificar</span>(<span class="ty">String</span> <span class="nm">canal</span>, <span class="ty">String</span> <span class="nm">destinatario</span>, <span class="ty">String</span> <span class="nm">mensagem</span>) {
+
+        <span class="kw">if</span> (<span class="nm">canal</span>.<span class="mt">equals</span>(<span class="st">"email"</span>)) {
+            <span class="ty">NotificacaoEmail</span> <span class="nm">n</span> = <span class="kw">new</span> <span class="ty">NotificacaoEmail</span>();
+            <span class="nm">n</span>.<span class="mt">enviar</span>(<span class="nm">destinatario</span>, <span class="nm">mensagem</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">canal</span>.<span class="mt">equals</span>(<span class="st">"sms"</span>)) {
+            <span class="ty">NotificacaoSMS</span> <span class="nm">n</span> = <span class="kw">new</span> <span class="ty">NotificacaoSMS</span>();
+            <span class="nm">n</span>.<span class="mt">enviar</span>(<span class="nm">destinatario</span>, <span class="nm">mensagem</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">canal</span>.<span class="mt">equals</span>(<span class="st">"push"</span>)) {
+            <span class="ty">NotificacaoPush</span> <span class="nm">n</span> = <span class="kw">new</span> <span class="ty">NotificacaoPush</span>();
+            <span class="nm">n</span>.<span class="mt">enviar</span>(<span class="nm">destinatario</span>, <span class="nm">mensagem</span>);
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Canal desconhecido: "</span> + <span class="nm">canal</span>);
+        }
+    }
+}
+</pre>
+
+  <pre><span class="kw">public class</span> <span class="ty">Main</span> {
+
+    <span class="kw">public static void</span> <span class="mt">main</span>(<span class="ty">String</span>[] <span class="nm">args</span>) {
+        <span class="ty">ServicoNotificacao</span> <span class="nm">servico</span> = <span class="kw">new</span> <span class="ty">ServicoNotificacao</span>();
+
+        <span class="nm">servico</span>.<span class="mt">notificar</span>(<span class="st">"email"</span>, <span class="st">"thiago@email.com"</span>, <span class="st">"Seu pedido #4521 foi confirmado!"</span>);
+        <span class="nm">servico</span>.<span class="mt">notificar</span>(<span class="st">"sms"</span>,   <span class="st">"+5511999990000"</span>,  <span class="st">"Seu pedido #4521 foi confirmado!"</span>);
+        <span class="nm">servico</span>.<span class="mt">notificar</span>(<span class="st">"push"</span>,  <span class="st">"thiago@email.com"</span>, <span class="st">"Seu pedido #4521 foi confirmado!"</span>);
+    }
+}</pre>
+
+  <div class="warn">
+    Um novo canal de notificação via <strong>WhatsApp</strong> precisa ser adicionado na próxima sprint.
+    O que acontece com esse código se você simplesmente adicionar mais um <code>else if</code>?
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    A saída do programa deve continuar sendo a mesma após a refatoração.
+  </p>
+
+</body>
+</html>
