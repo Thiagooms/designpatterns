@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Factory Method: Case 8</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #a78bfa; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed22;
+      border: 1px solid #7c3aed;
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #1e1b2e;
+      border-left: 4px solid #7c3aed;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 8</h1>
+  <div class="badge">Smell Code para refatorar</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Um banco digital oferece três modalidades de empréstimo: <strong>Pessoal</strong>,
+      <strong>Consignado</strong> e <strong>Imobiliário</strong>. Cada modalidade tem sua
+      própria taxa de juros, forma de calcular o total e processo de registro de contrato.
+    </p>
+    <p>
+      O desenvolvedor implementou tudo em um único serviço. O código funciona, mas o banco
+      quer adicionar duas novas modalidades na próxima versão: <strong>Estudantil</strong>
+      e <strong>Rural</strong>.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Switch Statements + Inappropriate Intimacy</p>
+    <p>
+      O <code>ServicoEmprestimo</code> instancia diretamente cada modalidade concreta e ainda
+      conhece detalhes internos de cada uma — qual taxa configurar, qual desconto aplicar.
+      Toda nova modalidade exige abrir e modificar essa classe.
+    </p>
+    <p>
+      Repare que após a criação do objeto, o serviço ainda chama métodos específicos de
+      configuração antes de processar — o que aumenta ainda mais o acoplamento.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+  <pre><span class="kw">public class</span> <span class="ty">ServicoEmprestimo</span> {
+
+    <span class="kw">public</span> <span class="ty">Emprestimo</span> <span class="mt">processar</span>(<span class="ty">String</span> <span class="nm">modalidade</span>, <span class="kw">double</span> <span class="nm">valor</span>) {
+
+        <span class="ty">Emprestimo</span> <span class="nm">emprestimo</span> = <span class="kw">null</span>;
+
+        <span class="kw">if</span> (<span class="nm">modalidade</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"PESSOAL"</span>)) {
+            <span class="nm">emprestimo</span> = <span class="kw">new</span> <span class="ty">EmprestimoPessoal</span>();
+            <span class="nm">emprestimo</span>.<span class="mt">aplicarTaxaMercado</span>();
+
+        } <span class="kw">else if</span> (<span class="nm">modalidade</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"CONSIGNADO"</span>)) {
+            <span class="nm">emprestimo</span> = <span class="kw">new</span> <span class="ty">EmprestimoConsignado</span>();
+            <span class="nm">emprestimo</span>.<span class="mt">aplicarDescontoFolha</span>();
+
+        } <span class="kw">else if</span> (<span class="nm">modalidade</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"IMOBILIARIO"</span>)) {
+            <span class="nm">emprestimo</span> = <span class="kw">new</span> <span class="ty">EmprestimoImobiliario</span>();
+            <span class="nm">emprestimo</span>.<span class="mt">aplicarGarantiaImovel</span>();
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Modalidade desconhecida: "</span> + <span class="nm">modalidade</span>);
+        }
+
+        <span class="nm">emprestimo</span>.<span class="mt">calcularJuros</span>(<span class="nm">valor</span>);
+        <span class="nm">emprestimo</span>.<span class="mt">calcularTotal</span>(<span class="nm">valor</span>);
+        <span class="nm">emprestimo</span>.<span class="mt">registrarContrato</span>();
+
+        <span class="kw">return</span> <span class="nm">emprestimo</span>;
+    }
+}</pre>
+
+  <div class="warn">
+    Cada modalidade tem sua própria taxa: o <strong>Pessoal</strong> cobra 3% ao mês,
+    o <strong>Consignado</strong> cobra 1,5% (desconto em folha) e o <strong>Imobiliário</strong>
+    cobra 0,7% com garantia do imóvel. Como isolar essas regras sem abrir o
+    <code>ServicoEmprestimo</code> toda vez que uma nova modalidade surgir?
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    A saída do programa deve continuar sendo a mesma após a refatoração.
+    Leve em conta que a interface deve expor <code>calcularJuros</code>, <code>calcularTotal</code>
+    e <code>registrarContrato</code> como contrato comum entre todas as modalidades.
+  </p>
+
+</body>
+</html>

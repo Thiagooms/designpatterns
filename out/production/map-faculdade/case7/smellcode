@@ -1,0 +1,28 @@
+public class ServicoFaturamento {
+
+public DocumentoFiscal processarFaturamento ( String tipoDocumento ,
+
+double valor ) {
+
+DocumentoFiscal documento = null ;
+
+if ( tipoDocumento . equalsIgnoreCase (" NFE ")) {
+documento = new NotaFiscalEletronica () ;
+documento . configurarImpostoNacional () ;
+} else if ( tipoDocumento . equalsIgnoreCase (" CUPOM ")) {
+documento = new CupomFiscal () ;
+documento . configurarImpostoEstadual () ;
+} else if ( tipoDocumento . equalsIgnoreCase (" EXPORTACAO ")) {
+documento = new FaturaExportacao () ;
+documento . aplicarIsencao () ;
+} else {
+throw new IllegalArgumentException (" Tipo de documento suportado .");
+
+}
+
+ documento . calcularTributos ( valor ) ;
+ documento . registrarEmBanco () ;
+
+ return documento ;
+ }
+}

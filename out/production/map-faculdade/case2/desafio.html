@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Strategy: Case 2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #a78bfa; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed22;
+      border: 1px solid #7c3aed;
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #1e1b2e;
+      border-left: 4px solid #7c3aed;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 2</h1>
+  <div class="badge">Smell Code para refatorar</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Uma plataforma de BI precisa gerar relatórios para diferentes áreas da empresa.
+      Os dados podem vir de três fontes: <strong>API REST</strong>, <strong>arquivo CSV</strong>
+      ou <strong>banco de dados</strong>. O relatório final pode ser exportado em três formatos:
+      <strong>PDF</strong>, <strong>Excel</strong> ou <strong>HTML</strong>.
+    </p>
+    <p>
+      O desenvolvedor implementou tudo em uma única classe. O código funciona, mas o produto
+      quer adicionar a fonte <strong>GraphQL</strong> e o formato de exportação <strong>JSON</strong>
+      na próxima versão.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Divergent Change + Violação do SRP</p>
+    <p>
+      O <code>GeradorDeRelatorio</code> muda por dois motivos completamente diferentes:
+      se uma nova fonte de dados for adicionada, a classe muda; se um novo formato de exportação
+      for exigido, a classe também muda. Ela conhece detalhes de infraestrutura (como conectar
+      em cada fonte) e de apresentação (como montar cada formato) ao mesmo tempo.
+    </p>
+    <p>
+      As duas dimensões de variação são <strong>independentes entre si</strong> — qualquer fonte
+      deve poder se combinar com qualquer formato — mas estão acopladas dentro do mesmo método.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+<pre><span class="kw">import</span> java.util.List;
+<span class="kw">import</span> java.util.ArrayList;
+<span class="kw">import</span> java.util.stream.Collectors;
+
+<span class="kw">public class</span> <span class="ty">GeradorDeRelatorio</span> {
+
+    <span class="kw">public void</span> <span class="mt">gerarEExportar</span>(<span class="ty">String</span> <span class="nm">fonte</span>, <span class="ty">String</span> <span class="nm">formato</span>) {
+
+        <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; <span class="nm">dados</span> = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+        <span class="cm">// Motivo de mudança 1: Fonte de dados</span>
+        <span class="kw">if</span> (<span class="nm">fonte</span>.<span class="mt">equals</span>(<span class="st">"API"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Conectando à API REST..."</span>);
+            <span class="nm">dados</span> = <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"vendas"</span>, <span class="st">"estoque"</span>, <span class="st">"clientes"</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">fonte</span>.<span class="mt">equals</span>(<span class="st">"CSV"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Lendo arquivo CSV..."</span>);
+            <span class="nm">dados</span> = <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"linha1"</span>, <span class="st">"linha2"</span>, <span class="st">"linha3"</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">fonte</span>.<span class="mt">equals</span>(<span class="st">"BANCO"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Executando query no banco de dados..."</span>);
+            <span class="nm">dados</span> = <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"registro1"</span>, <span class="st">"registro2"</span>, <span class="st">"registro3"</span>);
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Fonte desconhecida."</span>);
+        }
+
+        <span class="cm">// Processamento fixo</span>
+        <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; <span class="nm">dadosProcessados</span> = <span class="nm">dados</span>.<span class="mt">stream</span>()
+                .<span class="mt">map</span>(<span class="ty">String</span>::toUpperCase)
+                .<span class="mt">toList</span>();
+
+        <span class="cm">// Motivo de mudança 2: Formato de exportação</span>
+        <span class="kw">if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"PDF"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Gerando PDF..."</span>);
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"[PDF] "</span> + <span class="nm">dadosProcessados</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"EXCEL"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Gerando planilha Excel..."</span>);
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"[EXCEL] "</span> + <span class="ty">String</span>.<span class="mt">join</span>(<span class="st">";"</span>, <span class="nm">dadosProcessados</span>));
+
+        } <span class="kw">else if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"HTML"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Gerando página HTML..."</span>);
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"&lt;ul&gt;"</span> + <span class="nm">dadosProcessados</span>.<span class="mt">stream</span>()
+                    .<span class="mt">map</span>(<span class="nm">d</span> -&gt; <span class="st">"&lt;li&gt;"</span> + <span class="nm">d</span> + <span class="st">"&lt;/li&gt;"</span>)
+                    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">joining</span>()) + <span class="st">"&lt;/ul&gt;"</span>);
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Formato desconhecido."</span>);
+        }
+    }
+}</pre>
+
+  <div class="warn">
+    Fonte e formato variam de forma completamente independente: <strong>API + PDF</strong>,
+    <strong>CSV + HTML</strong>, <strong>BANCO + Excel</strong> — qualquer combinação deve ser possível.
+    Como separar essas duas responsabilidades de forma que adicionar <strong>GraphQL</strong> como fonte
+    ou <strong>JSON</strong> como formato não exija tocar em nenhuma classe já existente?
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    O processamento fixo (toUpperCase) deve continuar no orquestrador.
+    A solução deve usar duas interfaces de estratégia independentes: uma para coleta de dados
+    e outra para exportação. O <code>GeradorDeRelatorio</code> deve receber ambas pelo construtor.
+  </p>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Factory Method: Case 9</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #a78bfa; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed22;
+      border: 1px solid #7c3aed;
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #1e1b2e;
+      border-left: 4px solid #7c3aed;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 9</h1>
+  <div class="badge">Smell Code para refatorar</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Uma plataforma de e-commerce precisa enviar notificações para os clientes em três canais:
+      <strong>E-mail</strong>, <strong>SMS</strong> e <strong>Push</strong>. Cada canal possui
+      sua própria forma de configurar credenciais, formatar a mensagem e registrar o envio.
+    </p>
+    <p>
+      O desenvolvedor implementou tudo em um único serviço. O código funciona, mas o produto
+      quer adicionar dois novos canais na próxima versão: <strong>WhatsApp</strong>
+      e <strong>Webhook</strong>.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Switch Statements + Inappropriate Intimacy</p>
+    <p>
+      O <code>ServicoNotificacao</code> instancia diretamente cada canal concreto e ainda
+      conhece detalhes internos de cada um — qual provedor configurar, qual template aplicar.
+      Toda vez que um novo canal é adicionado, essa classe precisa ser aberta e modificada.
+    </p>
+    <p>
+      Repare que após a criação do objeto, o serviço ainda chama métodos de configuração
+      específicos de cada canal antes de enviar — o que aumenta ainda mais o acoplamento.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+  <pre><span class="kw">public class</span> <span class="ty">ServicoNotificacao</span> {
+
+    <span class="kw">public</span> <span class="ty">Notificacao</span> <span class="mt">enviar</span>(<span class="ty">String</span> <span class="nm">canal</span>, <span class="ty">String</span> <span class="nm">destinatario</span>, <span class="ty">String</span> <span class="nm">mensagem</span>) {
+
+        <span class="ty">Notificacao</span> <span class="nm">notificacao</span> = <span class="kw">null</span>;
+
+        <span class="kw">if</span> (<span class="nm">canal</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"EMAIL"</span>)) {
+            <span class="nm">notificacao</span> = <span class="kw">new</span> <span class="ty">NotificacaoEmail</span>();
+            <span class="nm">notificacao</span>.<span class="mt">configurarSMTP</span>();
+
+        } <span class="kw">else if</span> (<span class="nm">canal</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"SMS"</span>)) {
+            <span class="nm">notificacao</span> = <span class="kw">new</span> <span class="ty">NotificacaoSMS</span>();
+            <span class="nm">notificacao</span>.<span class="mt">configurarProvedor</span>();
+
+        } <span class="kw">else if</span> (<span class="nm">canal</span>.<span class="mt">equalsIgnoreCase</span>(<span class="st">"PUSH"</span>)) {
+            <span class="nm">notificacao</span> = <span class="kw">new</span> <span class="ty">NotificacaoPush</span>();
+            <span class="nm">notificacao</span>.<span class="mt">configurarDispositivo</span>();
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Canal desconhecido: "</span> + <span class="nm">canal</span>);
+        }
+
+        <span class="nm">notificacao</span>.<span class="mt">formatarMensagem</span>(<span class="nm">destinatario</span>, <span class="nm">mensagem</span>);
+        <span class="nm">notificacao</span>.<span class="mt">enviar</span>();
+        <span class="nm">notificacao</span>.<span class="mt">registrarEnvio</span>();
+
+        <span class="kw">return</span> <span class="nm">notificacao</span>;
+    }
+}</pre>
+
+  <div class="warn">
+    Cada canal tem suas particularidades: o <strong>E-mail</strong> exige configuração de servidor SMTP,
+    o <strong>SMS</strong> depende de um provedor externo com chave de API e o <strong>Push</strong>
+    precisa do token do dispositivo. Como isolar essas responsabilidades sem abrir o
+    <code>ServicoNotificacao</code> toda vez que um novo canal surgir?
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    A saída do programa deve continuar sendo a mesma após a refatoração.
+    Leve em conta que a interface deve expor <code>formatarMensagem</code>, <code>enviar</code>
+    e <code>registrarEnvio</code> como contrato comum entre todos os canais.
+  </p>
+
+</body>
+</html>

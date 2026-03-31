@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Adapter: Case 1</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #34d399; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #059669;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #05966922;
+      border: 1px solid #059669;
+      color: #34d399;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #0d1f18;
+      border-left: 4px solid #059669;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .task-box {
+      background: #0d1f18;
+      border: 1px solid #059669;
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin: 1.2rem 0;
+    }
+
+    .task-box ol {
+      padding-left: 1.4rem;
+      color: #a7f3d0;
+    }
+
+    .task-box ol li {
+      margin-bottom: 0.5rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+
+    code {
+      background: #1e293b;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85em;
+      color: #67e8f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 1</h1>
+  <div class="badge">Padrão Adapter</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Seu sistema de pagamentos usa uma interface própria chamada <code>ProcessadorPagamento</code>
+      com o método <code>pagar(double valor)</code>. Todo o código do sistema depende dessa interface.
+    </p>
+    <p>
+      A empresa contratou um gateway externo — a biblioteca <strong>PagSeguroLegado</strong> — que já
+      existe pronta e não pode ser modificada. O problema: ela expõe um método com uma assinatura
+      completamente diferente: <code>efetuarCobranca(String moeda, int centavos)</code>.
+    </p>
+    <p>
+      O desenvolvedor tentou resolver o problema da forma mais rápida possível e o resultado
+      está abaixo. O código até funciona, mas introduz um smell code sério que vai se
+      repetir cada vez que um novo gateway for integrado.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Shotgun Surgery + Violated Encapsulation</p>
+    <p>
+      O <strong>Shotgun Surgery</strong> aparece quando uma mudança exige alterações espalhadas em
+      vários lugares do código. Aqui, a lógica de conversão (<code>valor * 100</code>, moeda "BRL")
+      está duplicada direto no cliente — se o gateway mudar a forma de cobrar, você precisa
+      encontrar e alterar todos os pontos do sistema que o chamam.
+    </p>
+    <p>
+      O <strong>Violated Encapsulation</strong> complementa o problema: o cliente (<code>ServicoVenda</code>)
+      precisa conhecer detalhes internos do gateway externo — como ele representa centavos,
+      qual string de moeda usar — sendo que isso não é responsabilidade dele.
+    </p>
+    <p>
+      O sintoma direto é a conversão <code>(int)(valor * 100)</code> e a string <code>"BRL"</code>
+      espalhadas pelo código do cliente, em vez de estar encapsuladas em um único lugar.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+  <pre><span class="cm">// Biblioteca externa — não pode ser modificada</span>
+<span class="kw">public class</span> <span class="ty">PagSeguroLegado</span> {
+
+    <span class="kw">public void</span> <span class="mt">efetuarCobranca</span>(<span class="ty">String</span> <span class="nm">moeda</span>, <span class="kw">int</span> <span class="nm">centavos</span>) {
+        <span class="ty">System</span>.<span class="nm">out</span>.<span class="mt">println</span>(<span class="st">"[PagSeguro] Cobrando "</span> + <span class="nm">centavos</span> + <span class="st">" centavos em "</span> + <span class="nm">moeda</span>);
+    }
+}</pre>
+
+  <pre><span class="cm">// Interface que o sistema espera</span>
+<span class="kw">public interface</span> <span class="ty">ProcessadorPagamento</span> {
+    <span class="kw">void</span> <span class="mt">pagar</span>(<span class="kw">double</span> <span class="nm">valor</span>);
+}</pre>
+
+  <pre><span class="cm">// Cliente que usa o gateway diretamente — sem nenhum adaptador</span>
+<span class="kw">public class</span> <span class="ty">ServicoVenda</span> {
+
+    <span class="kw">private</span> <span class="ty">PagSeguroLegado</span> <span class="nm">gateway</span> = <span class="kw">new</span> <span class="ty">PagSeguroLegado</span>();
+
+    <span class="kw">public void</span> <span class="mt">finalizarCompra</span>(<span class="kw">double</span> <span class="nm">valor</span>) {
+        <span class="ty">System</span>.<span class="nm">out</span>.<span class="mt">println</span>(<span class="st">"Finalizando compra de R$ "</span> + <span class="nm">valor</span>);
+
+        <span class="cm">// Lógica de conversão vazando para o cliente</span>
+        <span class="kw">int</span> <span class="nm">centavos</span> = (<span class="kw">int</span>) (<span class="nm">valor</span> * 100);
+        <span class="nm">gateway</span>.<span class="mt">efetuarCobranca</span>(<span class="st">"BRL"</span>, <span class="nm">centavos</span>);
+    }
+}</pre>
+
+  <pre><span class="kw">public class</span> <span class="ty">Main</span> {
+
+    <span class="kw">public static void</span> <span class="mt">main</span>(<span class="ty">String</span>[] <span class="nm">args</span>) {
+        <span class="ty">ServicoVenda</span> <span class="nm">venda</span> = <span class="kw">new</span> <span class="ty">ServicoVenda</span>();
+        <span class="nm">venda</span>.<span class="mt">finalizarCompra</span>(149.90);
+        <span class="nm">venda</span>.<span class="mt">finalizarCompra</span>(39.00);
+    }
+}</pre>
+
+  <div class="warn">
+    Um segundo gateway — <strong>MercadoPagoLegado</strong> — precisa ser integrado na próxima sprint.
+    Ele também tem uma assinatura diferente: <code>realizarDebito(int valorEmCentavos, String codigoMoeda)</code>.
+    O que acontece com o <code>ServicoVenda</code> se você continuar sem o padrão Adapter?
+  </div>
+
+  <hr class="divider"/>
+
+  <h2>O que você deve implementar</h2>
+
+  <div class="task-box">
+    <ol>
+      <li>Crie uma classe <code>PagSeguroAdapter</code> que implemente <code>ProcessadorPagamento</code> e delegue para <code>PagSeguroLegado</code> internamente.</li>
+      <li>Remova a lógica de conversão de centavos e a string <code>"BRL"</code> do <code>ServicoVenda</code> — ela pertence ao adapter.</li>
+      <li>Faça o <code>ServicoVenda</code> depender apenas de <code>ProcessadorPagamento</code>, sem saber nada sobre o gateway concreto.</li>
+      <li>Garanta que a saída do programa continue idêntica após a refatoração.</li>
+    </ol>
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    A saída do programa deve continuar sendo a mesma após a refatoração.
+  </p>
+
+</body>
+</html>

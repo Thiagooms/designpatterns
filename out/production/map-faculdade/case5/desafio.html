@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Desafio — Strategy: Case 5</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.7;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; color: #a78bfa; margin-bottom: 0.3rem; }
+
+    h2 {
+      font-size: 1rem;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 2.2rem 0 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed22;
+      border: 1px solid #7c3aed;
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    p { color: #cbd5e1; margin-bottom: 0.8rem; }
+
+    .context-box {
+      background: #1e1b2e;
+      border-left: 4px solid #7c3aed;
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid #2d2d44;
+      border-radius: 8px;
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .smell-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .smell-label span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f87171;
+      background: #f8717122;
+      border: 1px solid #f87171;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .kw  { color: #a78bfa; }
+    .ty  { color: #67e8f9; }
+    .st  { color: #86efac; }
+    .cm  { color: #475569; font-style: italic; }
+    .mt  { color: #fbbf24; }
+    .nm  { color: #e2e8f0; }
+
+    .warn {
+      background: #1c0f0f;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: 0.88rem;
+      color: #fca5a5;
+      margin: 1.2rem 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 2.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Desafio — Case 5</h1>
+  <div class="badge">Smell Code para refatorar</div>
+
+  <h2>Contexto</h2>
+  <div class="context-box">
+    <p>
+      Uma aplicação corporativa possui um sistema de log que registra eventos em tempo de execução.
+      Cada log passa por duas etapas: primeiro é <strong>formatado</strong> em um padrão
+      (<strong>JSON</strong>, <strong>Texto simples</strong> ou <strong>XML</strong>),
+      depois é <strong>enviado para um destino</strong> (<strong>Console</strong>,
+      <strong>Arquivo</strong> ou <strong>Servidor remoto</strong>).
+    </p>
+    <p>
+      O time de infraestrutura quer adicionar o formato <strong>CSV</strong> e o destino
+      <strong>Banco de dados</strong> na próxima versão.
+    </p>
+  </div>
+
+  <h2>Sobre o smell code</h2>
+
+  <div class="context-box" style="border-color: #f87171;">
+    <p style="color: #fca5a5; font-weight: 600; margin-bottom: 0.4rem;">Divergent Change + Violação do SRP</p>
+    <p>
+      O <code>SistemaDeLog</code> muda por dois motivos completamente diferentes:
+      se um novo formato de log for exigido, a classe muda; se um novo destino de saída
+      for adicionado, a classe também muda.
+    </p>
+    <p>
+      As duas dimensões são <strong>totalmente independentes</strong> — qualquer formato
+      deve poder se combinar com qualquer destino — mas estão acopladas dentro do mesmo método.
+    </p>
+  </div>
+
+  <h2>Código atual</h2>
+
+  <div class="smell-label">
+    <span>smell code</span>
+  </div>
+
+<pre><span class="kw">public class</span> <span class="ty">SistemaDeLog</span> {
+
+    <span class="kw">public void</span> <span class="mt">registrar</span>(<span class="ty">String</span> <span class="nm">nivel</span>, <span class="ty">String</span> <span class="nm">mensagem</span>, <span class="ty">String</span> <span class="nm">formato</span>, <span class="ty">String</span> <span class="nm">destino</span>) {
+
+        <span class="ty">String</span> <span class="nm">logFormatado</span>;
+
+        <span class="cm">// Motivo de mudança 1: Formato do log</span>
+        <span class="kw">if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"JSON"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Formatando log como JSON..."</span>);
+            <span class="nm">logFormatado</span> = <span class="st">"{\"nivel\": \""</span> + <span class="nm">nivel</span> + <span class="st">"\", \"mensagem\": \""</span> + <span class="nm">mensagem</span> + <span class="st">"\"}"</span>;
+
+        } <span class="kw">else if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"TEXTO"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Formatando log como texto simples..."</span>);
+            <span class="nm">logFormatado</span> = <span class="st">"["</span> + <span class="nm">nivel</span> + <span class="st">"] "</span> + <span class="nm">mensagem</span>;
+
+        } <span class="kw">else if</span> (<span class="nm">formato</span>.<span class="mt">equals</span>(<span class="st">"XML"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Formatando log como XML..."</span>);
+            <span class="nm">logFormatado</span> = <span class="st">"&lt;log&gt;&lt;nivel&gt;"</span> + <span class="nm">nivel</span> + <span class="st">"&lt;/nivel&gt;&lt;mensagem&gt;"</span> + <span class="nm">mensagem</span> + <span class="st">"&lt;/mensagem&gt;&lt;/log&gt;"</span>;
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Formato desconhecido."</span>);
+        }
+
+        <span class="cm">// Motivo de mudança 2: Destino do log</span>
+        <span class="kw">if</span> (<span class="nm">destino</span>.<span class="mt">equals</span>(<span class="st">"CONSOLE"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Saída no console: "</span> + <span class="nm">logFormatado</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">destino</span>.<span class="mt">equals</span>(<span class="st">"ARQUIVO"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Escrevendo no arquivo de log..."</span>);
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Conteúdo gravado: "</span> + <span class="nm">logFormatado</span>);
+
+        } <span class="kw">else if</span> (<span class="nm">destino</span>.<span class="mt">equals</span>(<span class="st">"REMOTO"</span>)) {
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Enviando log para servidor remoto..."</span>);
+            <span class="ty">System</span>.out.<span class="mt">println</span>(<span class="st">"Payload enviado: "</span> + <span class="nm">logFormatado</span>);
+
+        } <span class="kw">else</span> {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Destino desconhecido."</span>);
+        }
+    }
+}</pre>
+
+  <div class="warn">
+    Formato e destino variam de forma completamente independente: <strong>JSON + CONSOLE</strong>,
+    <strong>XML + ARQUIVO</strong>, <strong>TEXTO + REMOTO</strong> — qualquer combinação deve
+    ser possível. Como separar essas responsabilidades de forma que adicionar <strong>CSV</strong>
+    como formato ou <strong>Banco de dados</strong> como destino não exija tocar em nenhuma
+    classe já existente?
+  </div>
+
+  <hr class="divider"/>
+
+  <p style="color: #64748b; font-size: 0.85rem;">
+    A solução deve usar duas interfaces de estratégia independentes: uma para formatação
+    e outra para destino. O <code>SistemaDeLog</code> deve receber ambas pelo construtor.
+    Atenção: o resultado da estratégia de formatação (<code>String</code>) é a entrada
+    da estratégia de destino — o fluxo entre as duas não é opcional.
+  </p>
+
+</body>
+</html>
